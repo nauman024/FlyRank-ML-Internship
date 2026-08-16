@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantifying and Predicting Search Performance Decay</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            line-height: 1.6; 
+            color: #24292e; 
+            max-width: 850px; 
+            margin: 0 auto; 
+            padding: 40px 20px; 
+            background-color: #fcfcfc; 
+        }
+        h1 { 
+            font-size: 2.2rem; 
+            margin-bottom: 0.2rem; 
+            color: #0969da; 
+        }
+        .meta { 
+            color: #57606a; 
+            margin-bottom: 2rem; 
+            font-size: 0.95rem; 
+        }
+        .abstract-box { 
+            background: #f6f8fa; 
+            border-left: 4px solid #0969da; 
+            padding: 15px 20px; 
+            margin: 20px 0; 
+            border-radius: 0 6px 6px 0; 
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin: 20px 0; 
+        }
+        th, td { 
+            border: 1px solid #d0d7de; 
+            padding: 10px 12px; 
+            text-align: left; 
+        }
+        th { 
+            background: #f6f8fa; 
+            font-weight: 600; 
+        }
+        figure {
+            margin: 25px 0;
+            text-align: center;
+        }
+        img { 
+            max-width: 100%; 
+            height: auto; 
+            border: 1px solid #d0d7de; 
+            border-radius: 6px; 
+        }
+        figcaption {
+            font-size: 0.85rem;
+            color: #57606a;
+            margin-top: 8px;
+        }
+        .footer { 
+            margin-top: 50px; 
+            padding-top: 20px; 
+            border-top: 1px solid #d0d7de; 
+            font-size: 0.9rem; 
+            color: #57606a; 
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Quantifying and Predicting Search Performance Decay in Large-Scale Web Content</h1>
+    <div class="meta">
+        <strong>Author:</strong> Nauman Ahmed &nbsp;|&nbsp; <strong>Track:</strong> Machine Learning Capstone
+    </div>
+
+    <div class="abstract-box">
+        <h3>Abstract</h3>
+        <p>Search engine traffic decay across digital publications poses a continuous challenge for digital publishers, yet automated remediation often relies on unvalidated heuristic rules. This study evaluates machine learning models for detecting content performance degradation across a multi-client production warehouse dataset of over 79 million daily search log records. We engineer features from Google Search Console (GSC) performance metrics (impressions, average ranking positions, and click-through rates) strictly from a mid-panel observation snapshot (March 2026). Using a client-holdout validation design (<code>GroupShuffleSplit</code>), a Random Forest classifier achieved a validated F1-score of <strong>0.7842</strong>, outperforming a fixed heuristic rule-based baseline (<strong>F1: 0.5812</strong>). These results demonstrate that grouped Machine Learning models provide reliable directional decision-support for prioritizing content updates without introducing data leakage.</p>
+    </div>
+
+    <h2>1. Introduction & Problem Statement</h2>
+    <p>Digital publishers often experience silent content decay—a persistent drop in search impression share and click-through rates (CTR) as competing web pages update and search engine algorithms evolve. Traditional Content Management Systems (CMS) address this using static rules (e.g., flagging any page untouched for >180 days). However, static rules produce high rates of false positives on evergreen content and false negatives on rapid-decay topics. This paper formulates content performance risk prediction as a supervised machine learning task, comparing multi-feature decision models against heuristic baselines using a client-grouped validation strategy.</p>
+
+    <h2>2. Data Specification</h2>
+    <p>The study utilizes daily search log records extracted from the FlyRank warehouse snapshot:</p>
+    <ul>
+        <li><strong>Data Source:</strong> <code>fact_content_daily_performance</code> joined with <code>dim_content</code>.</li>
+        <li><strong>Observation Window:</strong> March 2026 (<code>month=2026-03</code>). Future time horizons remain sealed to prevent temporal leakage.</li>
+        <li><strong>Exclusion Criteria:</strong> Excluded deleted pages (<code>is_deleted IS TRUE</code>) and low-volume pages (≤ 100 impressions) to mitigate sampling noise.</li>
+        <li><strong>Public-Safety Framing:</strong> All URLs and client entities are pseudonymized hashes (<code>content_hash_id</code>, <code>client_hash_id</code>). No private queries or client names are exposed.</li>
+    </ul>
+
+    <h2>3. Methodology</h2>
+    <p>We engineered features available at the moment of decision: average ranking position (<code>avg_position</code>), logarithmic impression volume (<code>log_impressions</code>), and content active span (<code>active_days</code>). To eliminate cross-domain data leakage, we utilized a <code>GroupShuffleSplit</code> (80% train / 20% validation) grouped strictly on <code>client_hash_id</code>. Models are evaluated against a heuristic baseline rule combining expected tier CTR deficits and content age.</p>
+
+    <h2>4. Results (vs. Baseline)</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Model / Baseline</th>
+                <th>Accuracy</th>
+                <th>Precision</th>
+                <th>Recall</th>
+                <th>F1-Score</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Heuristic Rule Baseline</td>
+                <td>0.7120</td>
+                <td>0.5430</td>
+                <td>0.6250</td>
+                <td>0.5812</td>
+            </tr>
+            <tr>
+                <td><strong>Random Forest (Grouped Split)</strong></td>
+                <td><strong>0.8412</strong></td>
+                <td><strong>0.7650</strong></td>
+                <td><strong>0.8040</strong></td>
+                <td><strong>0.7842</strong></td>
+            </tr>
+        </tbody>
+    </table>
+    <p>The client-grouped Random Forest model achieved a <strong>+20.3% improvement in F1-Score</strong> over the static heuristic baseline, demonstrating the value of multi-feature non-linear interaction modeling over static threshold rules.</p>
+
+    <h2>5. Limitations</h2>
+    <ul>
+        <li><strong>Decision Support Only:</strong> Outputs represent statistical risk prioritisation, not causal explanations of search engine ranking algorithms.</li>
+        <li><strong>Unobserved Factors:</strong> Does not capture external SERP changes (e.g., AI Overviews, new ads, or sudden off-page backlink shifts).</li>
+    </ul>
+
+    <h2>6. Ranked Recommendations (Action Playbook)</h2>
+    <ul>
+        <li><strong>REWRITE_METAS_AND_REFRESH:</strong> High impression volume with severe CTR deficits in top ranking tiers.</li>
+        <li><strong>UPDATE_CONTENT_BODY:</strong> Moderate ranking drift or structural decay over time.</li>
+        <li><strong>MONITOR:</strong> Stable baseline performance.</li>
+    </ul>
+
+    <figure>
+        <img src="work/figures/w07_action_queue_distribution.png" alt="Action Queue Distribution (Capstone Playbook)">
+        <figcaption><strong>Figure 1:</strong> Action Queue Distribution across evaluated candidate pages showing tier classification counts.</figcaption>
+    </figure>
+
+    <p><strong>The NO-GO List:</strong> Never auto-publish unreviewed AI-generated copy to live production or automate bulk 301 redirects without human editorial review.</p>
+
+    <h2>7. Reproducibility</h2>
+    <p>All pipeline code, SQL queries, feature engineering, and model training steps are fully reproducible via the notebook located in <code>work/notebooks/capstone.ipynb</code>.</p>
+
+    <div class="footer">
+        <h2>8. Acknowledgments & Data Credit</h2>
+        <p>Built on the <a href="https://flyrank.ai" target="_blank">FlyRank ML Internship dataset</a>.</p>
+    </div>
+
+</body>
+</html>
