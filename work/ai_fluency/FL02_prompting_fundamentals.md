@@ -1,10 +1,8 @@
 # Prompting Fundamentals on Real Tasks (FL-02)
 
-**Participant:** Nauman Ahmed  
-**Track:** AI Fluency — Foundations  
+**Track:** AI Fluency 
 **Target Paper Analyzed:** FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness (Dao et al., 2022)  
 **Selected FL-01 Task:** Target Task 1 — Research Paper & Technical Documentation Synthesis  
-**Observation Date:** August 2026  
 
 ---
 
